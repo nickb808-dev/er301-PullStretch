@@ -1,4 +1,4 @@
-# Pull Stretch ER-301 Package
+# PullStretch ER-301 Package
 
 **Package:** `pullstretch` · **Version:** 0.4.0 · **Category:** Spectral
 
