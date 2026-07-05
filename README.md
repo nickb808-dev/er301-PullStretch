@@ -14,7 +14,7 @@ crawls through that buffer at `1/stretch` speed. Every hop (75% overlap) the uni
 FFT window at the read head, runs an FFT, **keeps each bin's magnitude but replaces its
 phase** (randomised, blended with the original by `scatter`), and overlap-adds the inverse
 FFT back to the output. Because the read head moves slowly, the same spectral slice is
-re-synthesised many times with fresh phases — that's what produces the smooth, time-frozen
+re-synthesised many times with fresh phases. That is what produces the smooth, time-frozen
 smear that retains the harmonic character of the source.
 
 ## Window size (v0.4.0)
