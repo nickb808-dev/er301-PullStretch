@@ -1,6 +1,6 @@
 # Pull Stretch ER-301 Package
 
-**Package:** `pullstretch` · **Version:** 0.4.0 · **Category:** Spectral
+**Package:** `pullstretch` · **Version:** 0.6.0 · **Category:** Spectral
 
 An extreme time-stretch / spectral smear for the ER-301, based on the Paulstretch algorithm
 (Nasca Octavian Paul, 2006), adapted for **live, real-time input**. Patch any audio into the
@@ -39,7 +39,9 @@ active freeze). Startup silence is one analysis window plus one hop
 | **stretch** | 1 – 10000 | 10 | Time-stretch factor. 1 = real-time, 10 = slow smear, 1000+ = near-static drone. CV-patchable. |
 | **scatter** | 0 – 1 | 1.0 | Phase randomisation. 0 = original phases preserved (coherent, chorus-like), 1 = fully random (classic Paulstretch smear). CV-patchable. |
 | **sprd** | 0 – 1 | 0.75 | Stereo width. 0 = mono, 1 = fully decorrelated L/R. CV-patchable. |
-| **freeze** | toggle | off | Latches the current spectral slice — push on / push off. The on-screen button shows the held state. CV-patchable (a trigger pulse toggles). |
+| **freeze** | toggle | off | Latches the current spectral slice (**slot A**) — push on / push off. The on-screen button shows the held state. CV-patchable (a trigger pulse toggles). |
+| **grab** | gate | — | Adds the current spectrum to the **slot bank** (7 slots, chronological, oldest overwritten; v0.6.0). Works while frozen — it grabs the freshest *input*, so you can hold a drone on A and keep collecting material. While live it grabs at the read head (what you hear — older audio at high stretch). **Hold ~1 s to clear the bank.** |
+| **morph** | 0 – 1 | 0.0 | Scans the frozen sound across the bank — node 0 (the freeze snapshot) → each grabbed slot in order — by **optimal transport**: spectral energy *slides along the frequency axis*, so pitched content glissandos between neighbouring spectra instead of crossfading through a double-exposure. Active only while frozen with ≥ 1 slot grabbed. CV-patchable. |
 | **level** | 0 – 2 | 1.0 | Output gain (unity ≈ 1.0). |
 
 All continuous controls are CV-patchable via MonoBranch. Output level stays roughly constant
@@ -59,6 +61,29 @@ A context-menu option, **FreezeLock**, controls how the frozen sound behaves:
   static, unchanging tone.
 
 (Long-press the unit → Options to set FreezeLock.)
+
+## Freeze morph & slot bank (v0.5.0 / v0.6.0)
+
+Freeze holds the playback spectrum (node 0); each **grab** adds a spectrum to a
+7-slot bank; **morph** then scans node 0 → G1 → … → Gn by 1D optimal transport —
+energy moves *along* the frequency axis, so a 200 Hz drone scanned toward a 3 kHz
+grab sweeps through the frequencies in between rather than fading overlapping
+tones. A spectral wavetable, scanned by transport. A context-menu option,
+**MorphWarp**, sets the glide law:
+
+- **Log** (default) — equal morph increments are equal musical intervals (glissandi in cents).
+- **Linear** — equal increments in Hz.
+
+Recipe: play sounds, tapping **grab** on each moment worth keeping; play a final
+sound and tap **freeze**; sweep **morph** (knob or CV) to glide through your
+collection in the order you grabbed it. Hold **grab** ~1 s to empty the bank.
+Slots survive until overwritten, cleared, or a window-size change (which
+invalidates them — re-freeze re-arms node 0 automatically as of v0.5.1).
+
+Two things to know: keep **scatter** up while morphing — at morph > 0 the synth runs
+from magnitudes only, so scatter near 0 flips coherent playback into a zero-phase
+impulse character. And morph is evaluated once per hop (~11/21/43 ms by window), so
+CV sweeps land at hop rate, consistent with the rest of the unit.
 
 ## Stereo
 
