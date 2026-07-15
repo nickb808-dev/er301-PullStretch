@@ -1,4 +1,11 @@
-/* PullStretch.h — Paul's Extreme Time Stretch for ER-301 v0.4.0
+/* PullStretch.h — Paul's Extreme Time Stretch for ER-301 v0.7.0
+ *
+ * v0.7.0 — MORPH REMOVED.  The freeze-morph / slot-bank experiment (v0.5.0–
+ * v0.6.0: Grab B, the 7-slot spectral scanner, the Morph knob, MorphWarp, and
+ * the optimal-transport interpolation) is removed.  PullStretch is back to the
+ * pure extreme time-stretch with the Freeze hold — the part that always sounded
+ * good.  (The transport morph never resolved cleanly on hardware; see the
+ * Entangler package for the shared OT kernel and that investigation.)
  *
  * CONCEPT
  * ───────
@@ -80,14 +87,14 @@
  * once at construction and live until the .so unloads — nothing is ever
  * re-planned at runtime.
  *
- * MEMORY (per instance, v0.4.0 max-size allocation)
+ * MEMORY (per instance, v0.7.0 max-size allocation)
  * ─────────────────────────────────────────────────
  *   Capture buffer:              131072 × 4 B = 512 KB
  *   Analysis scratch:              8192 × 4 B =  32 KB
  *   Spectra (out/frozen/L/R):   4× 4097 × 8 B = 128 KB
  *   Synthesis + OLA (×4):       4× 8192 × 4 B = 128 KB
  *   Windows (3 sizes):          14336  × 4 B =  56 KB
- *   Total:                                     ≈ 860 KB */
+ *   Total:                                     ≈ 856 KB */
 
 #pragma once
 
@@ -190,7 +197,7 @@ private:
     // ── Freeze snapshot ───────────────────────────────────────────────────
     // Captured on the rising edge of the Freeze gate; invalidated by a
     // window-size change (it was taken at the old size).
-    std::vector<complex_float_t> mFrozenSpectrum; // kMaxNumBins
+    std::vector<complex_float_t> mFrozenSpectrum; // kMaxNumBins — slot A (complex)
     bool mFrozenActive = false;  // true while frozen and snapshot is valid
     bool mWasFrozen    = false;  // previous-block freeze state for edge detection
 

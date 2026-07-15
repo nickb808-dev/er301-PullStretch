@@ -2821,6 +2821,12 @@ static int _wrap_kSineTableMask_get(lua_State* L) { int SWIG_arg = 0; int result
 static int _wrap_kCosOffset_get(lua_State* L) { int SWIG_arg = 0; int result; SWIG_check_num_args("pullstretch::kCosOffset",0,0)
   result = (int)pullstretch::kCosOffset; lua_pushinteger(L, (lua_Integer) result); SWIG_arg++; return SWIG_arg; if(0) SWIG_fail;
   fail: lua_error(L); return SWIG_arg; }
+static int _wrap_kGrabSlots_get(lua_State* L) { int SWIG_arg = 0; int result; SWIG_check_num_args("pullstretch::kGrabSlots",0,0)
+  result = (int)pullstretch::kGrabSlots; lua_pushinteger(L, (lua_Integer) result); SWIG_arg++; return SWIG_arg; if(0) SWIG_fail;
+  fail: lua_error(L); return SWIG_arg; }
+static int _wrap_kClearHoldBlocks_get(lua_State* L) { int SWIG_arg = 0; int result;
+  SWIG_check_num_args("pullstretch::kClearHoldBlocks",0,0) result = (int)pullstretch::kClearHoldBlocks;
+  lua_pushinteger(L, (lua_Integer) result); SWIG_arg++; return SWIG_arg; if(0) SWIG_fail; fail: lua_error(L); return SWIG_arg; }
 static int _wrap_new_PullStretch(lua_State* L) { int SWIG_arg = 0; pullstretch::PullStretch *result = 0 ;
   SWIG_check_num_args("pullstretch::PullStretch::PullStretch",0,0)
   result = (pullstretch::PullStretch *)new pullstretch::PullStretch();
@@ -2888,6 +2894,8 @@ static swig_lua_attribute swig_SwigModule_attributes[] = {
     { "kSineTableSize", _wrap_kSineTableSize_get, SWIG_Lua_set_immutable },
     { "kSineTableMask", _wrap_kSineTableMask_get, SWIG_Lua_set_immutable },
     { "kCosOffset", _wrap_kCosOffset_get, SWIG_Lua_set_immutable },
+    { "kGrabSlots", _wrap_kGrabSlots_get, SWIG_Lua_set_immutable },
+    { "kClearHoldBlocks", _wrap_kClearHoldBlocks_get, SWIG_Lua_set_immutable },
     {0,0,0}
 };
 static swig_lua_const_info swig_SwigModule_constants[]= {

@@ -1,4 +1,4 @@
--- PullStretch.lua — ER-301 unit wrapper for Pull Stretch v0.3.1
+-- PullStretch.lua — ER-301 unit wrapper for Pull Stretch v0.7.0
 --
 -- SIGNAL FLOW
 -- ───────────

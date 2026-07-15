@@ -8,6 +8,7 @@
 #include "PullStretch.h"
 #include <cstdio>
 #include <cstring>
+#include <cstdlib>
 #include <cmath>
 #include <vector>
 
@@ -82,26 +83,31 @@ int main(int argc, char **argv)
 
     if (!strcmp(argv[1], "switch")) {
         // Live window switching mid-run: bounded, finite, re-primes cleanly.
+        // v0.5.1: a switch while the Freeze gate is HELD must re-arm the
+        // snapshot at the new size (refroze), not replay a stale spectrum.
         PullStretch d;
         setWindow(d, 2);
         setup(d, 10.0f, 1.0f, 0.75f, 0.0f, 1.0f);
         long nf = 0; float peak = 0;
+        bool refroze = false;
         for (int b = 0; b < 9000; ++b) {
             if (b == 2000) setWindow(d, 3);   // normal → deep
-            if (b == 4500) setWindow(d, 1);   // deep → short
+            if (b == 4500) setWindow(d, 1);   // deep → short (WHILE FROZEN)
             if (b == 7000) setWindow(d, 2);   // short → normal
             if (b == 3000) fill(d.mFreezeIn, 1.0f);   // freeze across a switch
             if (b == 5000) fill(d.mFreezeIn, 0.0f);
             feed(d, long(b) * FRAMELENGTH, 0.4f);
             d.process();
+            if (b == 4900) refroze = d.mFrozenActive;  // snapshot re-armed?
             for (int s = 0; s < FRAMELENGTH; ++s) {
                 const float y = d.mOutL.buffer()[s];
                 if (!std::isfinite(y)) nf++;
                 else if (fabsf(y) > peak) peak = fabsf(y);
             }
         }
-        printf("switch: nonFinite=%ld peak=%.3f\n", nf, peak);
-        return nf ? 1 : 0;
+        printf("switch: nonFinite=%ld peak=%.3f refrozeAfterSwitch=%d\n",
+               nf, peak, refroze ? 1 : 0);
+        return (nf || !refroze) ? 1 : 0;
     }
 #endif
 

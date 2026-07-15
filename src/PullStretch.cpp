@@ -1,7 +1,10 @@
-/* PullStretch.cpp — Paul's Extreme Time Stretch for ER-301 v0.4.0
+/* PullStretch.cpp — Paul's Extreme Time Stretch for ER-301 v0.7.0
  *
- * See PullStretch.h for algorithm, window-option, normalisation, and control
- * documentation.
+ * See PullStretch.h for algorithm, window-option, normalisation, and controls.
+ *
+ * v0.7.0 — MORPH REMOVED.  The freeze-morph / 7-slot spectral scanner (v0.5.0–
+ * v0.6.0: Grab B, Morph, MorphWarp, and the optimal-transport interpolation)
+ * is gone.  PullStretch is the pure extreme time-stretch + Freeze hold again.
  *
  * v0.4.0 — RUNTIME WINDOW SIZE (Short 2048 / Normal 4096 / Deep 8192)
  * ────────────────────────────────────────────────────────────────────
@@ -22,6 +25,7 @@
  * (pre-level), commit guard, mono window micro-opt. */
 
 #include "PullStretch.h"
+#include "trig_poly.h"   // libm-free ctor sin/cos (am335x package-trig fix)
 
 #include <algorithm>
 #include <cmath>
@@ -90,7 +94,7 @@ PullStretch::PullStretch()
         mHannWins[w].resize(N);
         const float step = kTwoPi / float(N);
         for (int i = 0; i < N; ++i)
-            mHannWins[w][i] = 0.5f * (1.0f - cosf(step * float(i)));
+            mHannWins[w][i] = 0.5f * (1.0f - trigpoly::pcos(step * float(i)));
 
         // Coherent OLA gain: mean_n Σ_{k=0..3} w_a(n+kH)·w_s(n+kH)  (= Σ w²
         // here, since analysis and synthesis share the window).
@@ -114,7 +118,7 @@ PullStretch::PullStretch()
 
     // ── Sine lookup table (random-phase generation) ──────────────────────
     for (int i = 0; i <= kSineTableSize; ++i)
-        mSineTable[i] = sinf(kTwoPi * float(i) / float(kSineTableSize));
+        mSineTable[i] = trigpoly::psin(kTwoPi * float(i) / float(kSineTableSize));
 
     // ── RFFT plans — one per size, allocated once, NEVER destroyed ───────
     for (int w = 0; w < kNumWinSizes; ++w)
@@ -188,8 +192,13 @@ float PullStretch::randUnipolar()
 
 void PullStretch::frameStart()
 {
-    // Freeze edge detection.
-    const bool newlyFrozen  = mFrozen && !mWasFrozen;
+    // Freeze edge detection.  v0.5.1: "frozen but snapshot invalid" (the gate
+    // held across a window-size switch, which invalidates the snapshot) is
+    // treated as newly frozen — the frame re-analyses at the held read head
+    // and re-snapshots slot A at the NEW size.  Previously this state fell
+    // through to a stale mFFTOut (upper bins zero/garbage on an upsize) and
+    // replayed it until unfreeze.
+    const bool newlyFrozen  = mFrozen && (!mWasFrozen || !mFrozenActive);
     const bool justUnfrozen = !mFrozen && mWasFrozen;
     mWasFrozen = mFrozen;
     if (justUnfrozen) mFrozenActive = false;
@@ -206,12 +215,14 @@ void PullStretch::frameStart()
 
     const float *win = mHannWins[mWinSel].data();
 
-    // Read + window + forward FFT (skipped when frozen with a live snapshot).
-    if (!mFrozen || newlyFrozen) {
+    // Analysis: run a forward FFT when the read head is live, or on the freeze
+    // rising edge (to take the snapshot).  While frozen, analysis is skipped
+    // and the held snapshot drives synthesis.
+    const bool wantLive = (!mFrozen || newlyFrozen);
+    if (wantLive) {
         int readStart = int(mReadHead) & kCapBufMask;
-
-        // Write-head straddle guard (v0.2.3): keep the analysis window clear
-        // of the live capture write head so it never contains a splice.
+        // Write-head straddle guard (v0.2.3): keep the analysis window clear of
+        // the live capture write head so it never has a splice.
         const int gap = (mCapWrite - readStart) & kCapBufMask;
         if (gap < mFFTSize) {
             readStart = (mCapWrite - mFFTSize) & kCapBufMask;
@@ -230,7 +241,7 @@ void PullStretch::frameStart()
         }
     }
 
-    // Which spectrum this frame reads (live FFT or freeze snapshot).
+    // Frozen → the held snapshot drives synthesis; live → the fresh FFT.
     mGenSpec = mFrozenActive ? &mFrozenSpectrum : &mFFTOut;
 
     // FreezeLock = Static (value 2, 1-based): replay the snapshot PRNG

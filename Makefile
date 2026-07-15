@@ -7,7 +7,7 @@ TOOLCHAIN ?= docker
 
 PKG     := pullstretch
 MODULE  := libpullstretch
-VERSION := 0.4.0
+VERSION := 0.7.0
 ARCH    := am335x
 
 SRCDIR   := src
